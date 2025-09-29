@@ -48,4 +48,9 @@ export class UserService {
         
     }
 
+    async getUser(id: string){
+        const user = await this.userModel.findOne({_id: id}).select("-password");
+        return user;
+    }
+
 }
