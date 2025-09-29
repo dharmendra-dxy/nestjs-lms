@@ -3,15 +3,18 @@ import bcrpyt from "bcrypt";
 import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { RegisterUserDTO } from './dto/registerUser.dto';
+import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class AuthService {
 
     // receive from userService:
-    constructor(private readonly userService:UserService){}
+    constructor(
+        private readonly userService:UserService,
+        private readonly jwtService: JwtService,
+    ){}
 
     async registerUser(registerUserDTO: RegisterUserDTO){
-
 
         // hash the password:
         const salt = 10;
@@ -26,7 +29,16 @@ export class AuthService {
          * 4. generate the jwt token
         */
 
-        return this.userService.createUser({...registerUserDTO, password: hassPassword});
+        const user = await this.userService.createUser({...registerUserDTO, password: hassPassword});
+
+        const jwtPayload = {
+            sub: user?.data?._id,
+            email: user?.data?.email,
+            role: user?.data?.role
+        }
+        const token = await this.jwtService.signAsync(jwtPayload);
+
+        return {...user, access_token: token};
     }
 
     loginUser(){
